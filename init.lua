@@ -1,4 +1,3 @@
--- Bootstrap Vim Plug
 vim.cmd [[
 if empty(glob('~/.vim/autoload/plug.vim'))
   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
@@ -7,17 +6,12 @@ if empty(glob('~/.vim/autoload/plug.vim'))
 endif
 ]]
 
--- Plugins
 vim.cmd [[
 call plug#begin('~/.vim/plugged')
 
-" Tree-sitter for better syntax highlighting and more
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-
-" LSP support for JavaScript/TypeScript
 Plug 'neovim/nvim-lspconfig'
 
-" Completion plugins
 Plug 'hrsh7th/nvim-cmp'
 Plug 'hrsh7th/cmp-nvim-lsp'
 Plug 'hrsh7th/cmp-buffer'
@@ -26,53 +20,42 @@ Plug 'hrsh7th/cmp-cmdline'
 Plug 'L3MON4D3/LuaSnip'
 Plug 'saadparwaiz1/cmp_luasnip'
 
-" Prettier for formatting
 Plug 'MunifTanjim/prettier.nvim'
 
-" ESLint integration
 Plug 'jose-elias-alvarez/null-ls.nvim'
 
-" Debugging (DAP)
 Plug 'mfussenegger/nvim-dap'
 
-" Optional: Fancy UI for LSP
 Plug 'glepnir/lspsaga.nvim'
 
-" Git integration
 Plug 'lewis6991/gitsigns.nvim'
 
-" Optional: File Explorer
-Plug 'kyazdani42/nvim-tree.lua'
-
-" Optional: Telescope for fuzzy finding
+" Plug 'kyazdani42/nvim-tree.lua'
+Plug 'nvim-tree/nvim-tree.lua'
 Plug 'nvim-telescope/telescope.nvim'
 Plug 'nvim-lua/plenary.nvim'
+Plug 'simrat39/rust-tools.nvim'
 
 call plug#end()
 ]]
 
--- General Settings
-vim.opt.completeopt = { "menu", "menuone", "noselect" } -- Completion options
-vim.opt.termguicolors = true -- Better colors
-vim.opt.number = true -- Line numbers
-vim.opt.relativenumber = true -- Relative line numbers
-
--- Treesitter Configuration
+vim.opt.completeopt = { "menu", "menuone", "noselect" } 
+vim.opt.termguicolors = true 
+vim.opt.number = true
+vim.opt.relativenumber = true 
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "javascript", "typescript", "tsx", "html", "css", "json" }, -- Add other languages as needed
-  highlight = { enable = true }, -- Enable syntax highlighting
-  indent = { enable = true } -- Enable better indentation
+  ensure_installed = { "javascript", "typescript", "rust", "lua" },
+  highlight = {
+    enable = true,
+    additional_vim_regex_highlighting = false  },
 }
 
--- LSP Configuration
 local lspconfig = require'lspconfig'
 lspconfig.ts_ls.setup {
   on_attach = function(client, bufnr)
-    -- Disable formatting in tsserver (use prettier instead)
     client.server_capabilities.documentFormattingProvider = false
     client.server_capabilities.documentRangeFormattingProvider = false
 
-    -- Keybindings for LSP
     local bufopts = { noremap=true, silent=true, buffer=bufnr }
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
     vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
@@ -81,7 +64,6 @@ lspconfig.ts_ls.setup {
   end
 }
 
--- Completion Configuration
 local cmp = require'cmp'
 cmp.setup {
   snippet = {
@@ -103,14 +85,12 @@ cmp.setup {
   })
 }
 
--- Prettier Configuration
 local prettier = require("prettier")
 prettier.setup({
   bin = 'prettier',
   filetypes = { "javascript", "typescript", "css", "html", "json" }
 })
 
--- Null-ls Configuration
 local null_ls = require("null-ls")
 null_ls.setup({
   sources = {
@@ -120,10 +100,36 @@ null_ls.setup({
   }
 })
 
--- Telescope Configuration
+local rust_tools = require('rust-tools')
+rust_tools.setup({
+  server = {
+    settings = {
+      ["rust-analyzer"] = {
+        cargo = { allFeatures = true },
+        checkOnSave = { command = "clippy" }      },
+    },
+  },
+})
+
 require'telescope'.setup{}
 
--- Optional: Automatically format on save
+require'nvim-tree'.setup {
+  view = {
+    side = "left",
+    width = 30,     
+},
+  renderer = {
+    highlight_git = true,     
+    highlight_opened_files = "all", 
+    },
+  actions = {
+    open_file = {
+      resize_window = true, 
+      },
+  },
+}
+vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
+
 vim.cmd [[
 autocmd BufWritePre *.js,*.ts,*.jsx,*.tsx,*.json Prettier
 ]]
